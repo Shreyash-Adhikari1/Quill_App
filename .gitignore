@@ -1,0 +1,23 @@
+# Local environment files contain secrets and must not be committed.
+.env
+.env.*
+!.env.example
+
+# Host dependencies are installed separately inside Docker images.
+node_modules/
+
+# TLS private keys must stay local and out of Git history.
+Quill_Backend/certs/
+Quill_Frontend/certs/
+
+/Quill_Backend/
+/Quill_Frontend/
+
+
+# Runtime backend logs are local evidence/debug output, not source.
+Quill_Backend/logs/
+
+
+/.agents
+/.codex
+
