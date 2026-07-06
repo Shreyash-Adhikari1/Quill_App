@@ -2,74 +2,151 @@
 
 A secure note-sharing and social platform built with Express, Next.js, and MongoDB.
 
+---
+
+## Repositories
+
+| Repository                                                       | Description                              |
+| ---------------------------------------------------------------- | ---------------------------------------- |
+| [Quill_Security](https://github.com/yourusername/Quill_Security) | Root repo — Docker setup, compose config |
+| [Quill_Backend](https://github.com/yourusername/Quill_Backend)   | Express + TypeScript + Mongoose API      |
+| [Quill_Frontend](https://github.com/yourusername/Quill_Frontend) | Next.js + TypeScript + Tailwind frontend |
+
+---
+
+## Tech Stack
+
+- **Frontend** — Next.js 14, TypeScript, Tailwind CSS
+- **Backend** — Express, TypeScript, Mongoose
+- **Database** — MongoDB
+- **Infrastructure** — Docker, Docker Compose, mkcert (HTTPS)
+
+---
+
 ## Prerequisites
 
-- Docker Desktop
-- mkcert
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Git](https://git-scm.com/)
+- [mkcert](https://github.com/FiloSottile/mkcert)
 
-## Setup
+**Windows:** `choco install mkcert`
+**Mac:** `brew install mkcert`
+**Installing mkcert on Linux:**
 
-### 1. Generate TLS Certificates
+```bash
+sudo apt install libnss3-tools
+wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64
+sudo mv mkcert-v1.4.4-linux-amd64 /usr/local/bin/mkcert
+sudo chmod +x /usr/local/bin/mkcert
+```
 
-Install mkcert, then create local HTTPS certificates:
+---
 
-```powershell
+## Setup Instructions
+
+### Step 1 — Clone the root repository
+
+```bash
+git clone https://github.com/yourusername/Quill_Security
+cd Quill_Security
+```
+
+### Step 2 — Clone backend and frontend inside the root
+
+```bash
+git clone https://github.com/yourusername/Quill_Backend
+git clone https://github.com/yourusername/Quill_Frontend
+```
+
+### 2 — Configure environment variables
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in all values. See `.env.example` for guidance on each variable.
+
+### Step 3 — Generate TLS certificates
+
+HTTPS is required for the application to run correctly. Run the following commands from inside the `Quill_Security` root directory:
+
+```bash
+# Install the local certificate authority (only needed once per machine)
 mkcert -install
-New-Item -ItemType Directory -Force Quill_Backend\certs
-New-Item -ItemType Directory -Force Quill_Frontend\certs
-mkcert -key-file Quill_Backend\certs\server.key -cert-file Quill_Backend\certs\server.crt localhost
-mkcert -key-file Quill_Frontend\certs\server.key -cert-file Quill_Frontend\certs\server.crt localhost
+
+# Create cert directories
+mkdir -p Quill_Backend/certs
+mkdir -p Quill_Frontend/certs
+
+# Generate certificates for backend
+mkcert -key-file Quill_Backend/certs/server.key -cert-file Quill_Backend/certs/server.crt localhost
+
+# Generate certificates for frontend
+mkcert -key-file Quill_Frontend/certs/server.key -cert-file Quill_Frontend/certs/server.crt localhost
 ```
 
-The backend reads `Quill_Backend/certs/server.key` and `Quill_Backend/certs/server.crt` at startup. These files are mounted read-only into Docker so private keys are not baked into images.
+### 4 — Start the application
 
-### 2. Configure Environment Variables
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Open `.env` and fill in all blank values. Keep `.env` local because it contains database, JWT, session, OAuth, and email secrets.
-
-### 3. Start the Application
-
-```powershell
+```bash
 docker compose up --build
 ```
 
-This starts MongoDB, the HTTPS backend, and the Next.js frontend together.
+### 5 — Access
 
-### 4. Access the Application
+| Service      | URL                               |
+| ------------ | --------------------------------- |
+| Frontend     | https://localhost:3000            |
+| Backend API  | https://localhost:5000/api        |
+| Health Check | https://localhost:5000/api/health |
 
-- Frontend: `https://localhost:3000`
-- Backend API: `https://localhost:5000/api`
-- Backend health check: `https://localhost:5000/api/health`
+---
 
-## Useful Commands
+## Docker Commands
 
-```powershell
-# Run in the background
-docker compose up --build -d
+```bash
+# Start everything
+docker compose up --build
 
-# View all logs
+# Start in background
+docker compose up -d
+
+# View logs
 docker compose logs -f
 
-# View one service
-docker compose logs -f backend
-
-# Stop containers while keeping MongoDB data
+# Stop
 docker compose down
 
-# Stop containers and wipe MongoDB data
+# Stop and wipe database
 docker compose down -v
-
-# Rebuild only the backend
-docker compose up --build backend
 ```
 
-## Docker Layout
+---
 
-- `docker-compose.yml` orchestrates MongoDB, backend, and frontend.
-- `Quill_Backend/Dockerfile` builds the Express API into a non-root production container.
-- `Quill_Frontend/Dockerfile` builds the Next.js standalone server into a non-root production container.
-- Docker volumes persist MongoDB data, backend logs, and uploaded files across rebuilds.
+## Local Development (without Docker)
+
+**Terminal 1 — Backend:**
+
+```bash
+cd Quill_Backend && npm install && npm run dev
+```
+
+**Terminal 2 — Frontend:**
+
+```bash
+cd Quill_Frontend && npm install && npm run dev
+```
+
+Make sure you have Node.js and a local MongoDB instance running. Create separate `.env` files inside each project directory using their respective `.env.example` files.
+
+---
+
+## Project Structure
+
+```
+Quill_Security/
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── Quill_Backend/
+└── Quill_Frontend/
+```
