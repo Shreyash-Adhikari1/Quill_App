@@ -8,7 +8,7 @@ A secure note-sharing and social platform built with Express, Next.js, and Mongo
 
 | Repository                                                       | Description                              |
 | ---------------------------------------------------------------- | ---------------------------------------- |
-| [Quill_Security](https://github.com/Shreyash-Adhikari1/Quill_Security) | Root repo — Docker setup, compose config |
+| [Quill_Security](https://github.com/Shreyash-Adhikari1/Quill_App) | Root repo — Docker setup, compose config |
 | [Quill_Backend](https://github.com/Shreyash-Adhikari1/Quill_Backend)   | Express + TypeScript + Mongoose API      |
 | [Quill_Frontend](https://github.com/Shreyash-Adhikari1/Quill_Frontend) | Next.js + TypeScript + Tailwind frontend |
 
