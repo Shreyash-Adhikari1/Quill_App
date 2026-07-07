@@ -66,6 +66,10 @@ cp .env.example .env
 
 Open `.env` and fill in all values. See `.env.example` for guidance on each variable.
 
+For Google reCAPTCHA, use the public site key for `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` and the legacy secret/private key for `RECAPTCHA_SECRET_KEY`. The secret belongs only in backend/root environment files, never in frontend browser code.
+
+For the one admin account, set `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `ADMIN_FULL_NAME` in `.env`. The password must pass the same password policy as normal accounts.
+
 ### Step 3 — Generate TLS certificates
 
 HTTPS is required for the application to run correctly. Run the following commands from inside the `Quill_Security` root directory:
@@ -89,6 +93,12 @@ mkcert -key-file Quill_Frontend/certs/server.key -cert-file Quill_Frontend/certs
 
 ```bash
 docker compose up --build
+```
+
+To create or promote the configured admin account in Docker:
+
+```bash
+docker compose --profile tools run --rm admin-seed
 ```
 
 ### 5 — Access
@@ -137,6 +147,13 @@ cd Quill_Frontend && npm install && npm run dev
 ```
 
 Make sure you have Node.js and a local MongoDB instance running. Create separate `.env` files inside each project directory using their respective `.env.example` files.
+
+To create or promote the configured admin account without Docker:
+
+```bash
+cd Quill_Backend
+npm run seed:admin
+```
 
 ---
 

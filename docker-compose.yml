@@ -46,6 +46,7 @@ services:
     # Security reason: the database is reachable only inside quill-network.
 
   backend:
+    image: quill-backend
     build:
       # Build context is limited to the backend project.
       context: ./Quill_Backend
@@ -82,6 +83,8 @@ services:
       EMAIL_PASS: ${EMAIL_PASS}
       EMAIL_FROM: ${EMAIL_FROM}
       OTP_EXPIRY_MINUTES: ${OTP_EXPIRY_MINUTES}
+      # Backend-only secret verifies Google reCAPTCHA tokens; never expose this to browser code.
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
     volumes:
       # Mount TLS certs read-only so the HTTPS server can read but not alter keys.
       - ./Quill_Backend/certs:/app/certs:ro
@@ -89,6 +92,33 @@ services:
       - backend-logs:/app/logs
       # Persist uploaded profile images outside the container lifecycle.
       - backend-uploads:/app/uploads
+
+  admin-seed:
+    image: quill-backend
+    build:
+      # Reuse the backend image so the seed script runs against the same compiled models and validation rules.
+      context: ./Quill_Backend
+      dockerfile: Dockerfile
+    container_name: quill-admin-seed
+    profiles:
+      # The tools profile keeps admin seeding manual; normal docker compose up will not run privileged setup.
+      - tools
+    restart: "no"
+    networks:
+      - quill-network
+    depends_on:
+      # MongoDB must be started before this one-shot seed can connect to the database.
+      - mongo
+    command: ["npm", "run", "seed:admin:prod"]
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      # Containers use the Compose service name "mongo"; localhost would point back at the seed container.
+      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASS}@mongo:27017/quill?authSource=admin
+      # Admin seed credentials are runtime-only secrets sourced from the local .env file.
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_FULL_NAME: ${ADMIN_FULL_NAME}
 
   frontend:
     build:
@@ -99,6 +129,8 @@ services:
         # Next.js inlines NEXT_PUBLIC values during build for browser code.
         # Passing this arg keeps the browser bundle pointed at the host backend URL.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        # reCAPTCHA site key is public and must be available during Next.js build.
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
     container_name: quill-frontend
     restart: unless-stopped
     networks:
@@ -112,6 +144,8 @@ services:
     environment:
       # Keep the value available to the Next.js runtime server as well.
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      # Public site key lets the browser render the Google reCAPTCHA widget.
+      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
     volumes:
       # Mount TLS certs read-only so the frontend is truly served over HTTPS.
       # This keeps Secure-cookie and CSRF testing aligned with the backend.
