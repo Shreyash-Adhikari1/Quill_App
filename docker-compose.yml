@@ -73,6 +73,8 @@ services:
       MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASS}@mongo:27017/quill?authSource=admin
       JWT_SECRET: ${JWT_SECRET}
       SESSION_SECRET: ${SESSION_SECRET}
+      OTP_PEPPER: ${OTP_PEPPER}
+      COOKIE_SECURE: ${COOKIE_SECURE}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       SERVER_URL: ${SERVER_URL}
@@ -85,6 +87,8 @@ services:
       OTP_EXPIRY_MINUTES: ${OTP_EXPIRY_MINUTES}
       # Backend-only secret verifies Google reCAPTCHA tokens; never expose this to browser code.
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+      RECAPTCHA_EXPECTED_HOSTNAME: ${RECAPTCHA_EXPECTED_HOSTNAME}
+      RECAPTCHA_MIN_SCORE: ${RECAPTCHA_MIN_SCORE}
     volumes:
       # Mount TLS certs read-only so the HTTPS server can read but not alter keys.
       - ./Quill_Backend/certs:/app/certs:ro
