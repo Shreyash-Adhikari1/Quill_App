@@ -87,6 +87,9 @@ services:
       OTP_EXPIRY_MINUTES: ${OTP_EXPIRY_MINUTES}
       # Backend-only secret verifies Google reCAPTCHA tokens; never expose this to browser code.
       RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+      # Public site key is also available to the runtime config endpoint so a
+      # cloned frontend is not dependent only on build-time interpolation.
+      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
       RECAPTCHA_EXPECTED_HOSTNAME: ${RECAPTCHA_EXPECTED_HOSTNAME}
       RECAPTCHA_MIN_SCORE: ${RECAPTCHA_MIN_SCORE}
     volumes:
