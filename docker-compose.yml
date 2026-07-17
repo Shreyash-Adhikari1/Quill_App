@@ -1,11 +1,11 @@
 # ============================================================
 # Quill - Docker Compose Configuration
-# Runs MongoDB, the Express backend, and the Next.js frontend.
+# Runs the Express backend and Next.js frontend against MongoDB Atlas.
 # Start with: docker compose up --build
 # ============================================================
 
-# Compose creates an isolated project network so services can talk by name.
-# Example: the backend reaches MongoDB with host "mongo", not localhost.
+# Compose creates an isolated project network for the application containers.
+# MongoDB Atlas is reached over TLS through the containers' outbound connection.
 networks:
   quill-network:
     # The bridge driver keeps Quill services on a private Docker network.
@@ -14,9 +14,6 @@ networks:
 
 # Named volumes persist important runtime data across container rebuilds.
 volumes:
-  mongo-data:
-    # MongoDB stores database files here so users/posts survive restarts.
-    driver: local
   backend-logs:
     # Backend logs persist outside the container filesystem for audit evidence.
     driver: local
@@ -25,26 +22,6 @@ volumes:
     driver: local
 
 services:
-  mongo:
-    # Pin MongoDB to a major/minor version instead of using latest.
-    # Pinning makes coursework demos reproducible and avoids surprise upgrades.
-    image: mongo:7.0
-    container_name: quill-mongo
-    restart: unless-stopped
-    networks:
-      - quill-network
-    volumes:
-      # /data/db is MongoDB's data directory inside the official image.
-      - mongo-data:/data/db
-    environment:
-      # Root credentials are read from the local .env file.
-      # They are not hardcoded here because compose files are normally committed.
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS}
-      MONGO_INITDB_DATABASE: quill
-    # No ports are published for MongoDB.
-    # Security reason: the database is reachable only inside quill-network.
-
   backend:
     image: quill-backend
     build:
@@ -58,19 +35,14 @@ services:
     ports:
       # Publish backend HTTPS from the container to the host.
       - "5000:5000"
-    depends_on:
-      # Start MongoDB before the backend.
-      # The app still needs a valid MONGO_URI because depends_on is not a readiness check.
-      - mongo
     environment:
       # Production mode enables secure cookie flags and production-safe errors in the backend.
       NODE_ENV: ${NODE_ENV}
       PORT: 5000
       HOST: 0.0.0.0
       SERVER_HOST: localhost:5000
-      # Inside Docker, "mongo" is the MongoDB service hostname.
-      # localhost would incorrectly point back at the backend container itself.
-      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASS}@mongo:27017/quill?authSource=admin
+      # Atlas SRV connection string is supplied by the root .env file at runtime.
+      MONGO_URI: ${MONGO_URI}
       JWT_SECRET: ${JWT_SECRET}
       SESSION_SECRET: ${SESSION_SECRET}
       OTP_PEPPER: ${OTP_PEPPER}
@@ -113,14 +85,11 @@ services:
     restart: "no"
     networks:
       - quill-network
-    depends_on:
-      # MongoDB must be started before this one-shot seed can connect to the database.
-      - mongo
     command: ["npm", "run", "seed:admin:prod"]
     environment:
       NODE_ENV: ${NODE_ENV}
-      # Containers use the Compose service name "mongo"; localhost would point back at the seed container.
-      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASS}@mongo:27017/quill?authSource=admin
+      # The seed command uses the same Atlas database as the backend.
+      MONGO_URI: ${MONGO_URI}
       # Admin seed credentials are runtime-only secrets sourced from the local .env file.
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
